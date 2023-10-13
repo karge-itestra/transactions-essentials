@@ -175,4 +175,8 @@ public class ParticipantAdapter implements Participant {
 		return "ParticipantAdapter for: " + getURI();
 	}
 
+	@Override
+	public boolean isLastResource() {
+		return false;
+	}
 }

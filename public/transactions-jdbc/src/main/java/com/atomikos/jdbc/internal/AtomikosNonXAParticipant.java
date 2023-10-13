@@ -172,4 +172,9 @@ class AtomikosNonXAParticipant implements Participant
 	public int hashCode() {
 	    return connection.hashCode();
 	}
+
+	@Override
+	public boolean isLastResource() {
+		return true;
+	}
 }

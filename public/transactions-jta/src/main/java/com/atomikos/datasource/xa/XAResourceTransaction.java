@@ -697,5 +697,8 @@ public class XAResourceTransaction implements ResourceTransaction, Participant {
 		return this.resourcename;
 	}
 
-
+	@Override
+	public boolean isLastResource() {
+		return false;
+	}
 }

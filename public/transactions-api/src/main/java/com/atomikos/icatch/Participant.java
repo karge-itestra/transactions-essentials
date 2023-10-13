@@ -177,5 +177,7 @@ public interface Participant
 	 * @return The (unique) name of the recoverable resource as known in the configuration. Null if not relevant.
 	 */
 	 String getResourceName();
+
+	 boolean isLastResource();
 }
 

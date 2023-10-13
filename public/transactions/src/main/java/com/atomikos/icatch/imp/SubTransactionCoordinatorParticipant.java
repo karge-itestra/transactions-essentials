@@ -132,4 +132,8 @@ public class SubTransactionCoordinatorParticipant implements Participant
 		return null;
 	}
 
+    @Override
+    public boolean isLastResource() {
+        return subordinateCoordinator.isLastResource();
+    }
 }

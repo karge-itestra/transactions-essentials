@@ -85,5 +85,8 @@ class ReadOnlyParticipant implements Participant {
 		return null;
 	}
 
-
+	@Override
+	public boolean isLastResource() {
+		return false;
+	}
 }

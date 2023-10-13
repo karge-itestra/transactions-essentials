@@ -104,5 +104,9 @@ class RollbackOnlyParticipant implements Participant
 			throws SysException {
 		
 	}
-	
+
+	@Override
+	public boolean isLastResource() {
+		return false;
+	}
 }

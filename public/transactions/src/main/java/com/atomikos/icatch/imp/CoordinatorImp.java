@@ -73,6 +73,9 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
     private String coordinatorId = null;
     private FSM fsm_ = null;
     private Vector<Participant> participants_ = new Vector<Participant>();
+
+	private Participant lastResourceParticipant_;
+
     private RecoveryCoordinator superiorCoordinator_ = null; 
 
     private CoordinatorStateHandler stateHandler_;
@@ -346,9 +349,14 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
     					getState ().toString () );
 
     		//FIRST add participant, THEN set state to support active recovery
-    		if ( !participants_.contains ( participant ) ) {
-    			participants_.add ( participant );
-    		}
+			if ( participant.isLastResource() ) {
+				if ( lastResourceParticipant_ != null && !lastResourceParticipant_.equals( participant ) ) {
+					throw new IllegalStateException("There can only ever be one last resource in a transaction to stay safe");
+				}
+				lastResourceParticipant_ = participant;
+			} else if ( !participants_.contains( participant ) ) {
+				participants_.add( participant );
+			}
     		//make sure that aftercompletion notification is done.
     		setState ( TxState.ACTIVE );
     	}
@@ -574,6 +582,9 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
 
         synchronized ( fsm_ ) {
         	stateHandler_.rollback();
+			if (lastResourceParticipant_ != null) {
+				lastResourceParticipant_.rollback();
+			}
         }
     }
 
@@ -675,10 +686,15 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
     {    
     	synchronized ( fsm_ ) {
     		if ( commit ) {
-    			if ( participants_.size () <= 1 ) {
-    				commit ( true );
-    			} else {
+    			if ( participants_.size () == 0 && lastResourceParticipant_ != null ) {
+					lastResourceParticipant_.commit( true );
+    			} else if ( participants_.size() <= 1 && lastResourceParticipant_ == null) {
+					commit ( true );
+				} else {
     				int prepareResult = prepare ();
+					if ( lastResourceParticipant_ != null ) {
+						lastResourceParticipant_.commit( true );
+					}
     				// make sure to only do commit if NOT read only
     				if ( prepareResult != Participant.READ_ONLY )
     					commit ( false );
@@ -792,5 +808,8 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
 	public void entered(FSMEnterEvent e) {
 	}
 
-
+	@Override
+	public boolean isLastResource() {
+		return false; //TODO maybe, if lastResource is coordinated?
+	}
 }
