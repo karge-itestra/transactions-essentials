@@ -216,8 +216,11 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
         return participants_;
     }
 
+	public Participant getLastResource() {
+		return lastResourceParticipant_;
+	}
 
-    int getLocalSiblingCount ()
+	int getLocalSiblingCount ()
     {
         return localSiblingsStarted;
     }
@@ -686,16 +689,12 @@ public class CoordinatorImp implements CompositeCoordinator, Participant,
     {    
     	synchronized ( fsm_ ) {
     		if ( commit ) {
-    			if ( participants_.size () == 0 && lastResourceParticipant_ != null ) {
-					lastResourceParticipant_.commit( true );
-    			} else if ( participants_.size() <= 1 && lastResourceParticipant_ == null) {
+    			if ( lastResourceParticipant_ == null && participants_.size() <= 1
+					 || lastResourceParticipant_ != null && participants_.size() == 0 ) {
 					commit ( true );
 				} else {
     				int prepareResult = prepare ();
-					if ( lastResourceParticipant_ != null ) {
-						lastResourceParticipant_.commit( true );
-					}
-    				// make sure to only do commit if NOT read only
+					// make sure to only do commit if NOT read only
     				if ( prepareResult != Participant.READ_ONLY )
     					commit ( false );
     			}

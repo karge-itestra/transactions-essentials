@@ -334,7 +334,9 @@ abstract class CoordinatorStateHandler
         try {
 
             Vector<Participant> participants = coordinator_.getParticipants();
-            int count = (participants.size () - readOnlyTable_.size ());
+			final Participant lastResource = onePhase ? coordinator_.getLastResource() : null;
+			int lastResourceCount = lastResource != null ? 1 : 0;
+            int count = (participants.size () + lastResourceCount - readOnlyTable_.size ());
             TerminationResult commitresult = new TerminationResult ( count );
 
             // cf bug 64546: avoid committed_ being null upon recovery!
@@ -373,6 +375,12 @@ abstract class CoordinatorStateHandler
                     propagator_.submitPropagationMessage ( cm );
                 }
             } // while
+
+			if ( lastResource != null ) {
+				CommitMessage cm = new CommitMessage ( lastResource, commitresult,
+													   onePhase );
+				propagator_.submitPropagationMessage ( cm );
+			}
 
             commitresult.waitForReplies ();
             int res = commitresult.getResult ();

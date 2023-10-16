@@ -112,6 +112,7 @@ class ActiveStateHandler extends CoordinatorStateHandler
         boolean allReadOnly = true; // if still true at end-> readonly vote
         int ret = 0; // return value
         Vector<Participant> participants = getCoordinator ().getParticipants ();
+		final Participant lastResource = getCoordinator().getLastResource();
         CoordinatorStateHandler nextStateHandler = null;
 
         if ( orphansExist() ) {
@@ -174,7 +175,16 @@ class ActiveStateHandler extends CoordinatorStateHandler
 
             result.waitForReplies ();
 
-            boolean voteOK = result.allYes ();
+			boolean voteOK = result.allYes ();
+
+			if ( voteOK && lastResource != null ) {
+				result.numberOfMissingReplies_++;
+				CommitMessage cm = new CommitMessage( lastResource, result, true );
+				getPropagator().submitPropagationMessage( cm );
+			}
+
+			result.waitForReplies();
+
             setReadOnlyTable ( result.getReadOnlyTable () );
             allReadOnly = result.allReadOnly ();
 
@@ -254,7 +264,8 @@ class ActiveStateHandler extends CoordinatorStateHandler
             throw new IllegalStateException (
                     "Illegal state for commit: ACTIVE!" );
 
-        if ( getCoordinator ().getParticipants ().size () > 1 ) {
+		final int lastResourceCount = getCoordinator().getLastResource() != null ? 1 : 0;
+		if ( getCoordinator ().getParticipants ().size () + lastResourceCount > 1 ) {
             int prepareResult = Participant.READ_ONLY + 1;
 
             // happens if client has one remote participant
