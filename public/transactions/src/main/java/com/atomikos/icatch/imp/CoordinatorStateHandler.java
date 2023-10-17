@@ -468,10 +468,18 @@ abstract class CoordinatorStateHandler
             // see TERMINATED state!
             committed_ = new Boolean ( false );
 
+			Participant lastResourceParticipant = coordinator_.getLastResource();
+			int lastResourceCount = lastResourceParticipant != null ? 1 : 0;
             Vector<Participant> participants = coordinator_.getParticipants ();
-            int count = (participants.size () - readOnlyTable_.size ());
+            int count = (participants.size () + lastResourceCount - readOnlyTable_.size ());
 
             TerminationResult rollbackresult = new TerminationResult ( count );
+
+			if ( lastResourceParticipant != null ) {
+				RollbackMessage rm = new RollbackMessage( lastResourceParticipant,
+														  rollbackresult, indoubt );
+				propagator_.submitPropagationMessage( rm );
+			}
 
             Enumeration<Participant> enumm = participants.elements ();
             while ( enumm.hasMoreElements () ) {
